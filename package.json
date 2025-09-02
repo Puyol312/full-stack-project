@@ -1,0 +1,40 @@
+{
+  "name": "dwf-desafio",
+  "version": "1.0.0",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "dev:back": "nodemon --watch ./server --ext ts,js,json --exec \"npx tsx ./server/index.ts\"",
+    "dev:front": "parcel serve ./client/index.html",
+    "build:server": "npx tsc",
+    "build:front": "parcel build ./client/index.html",
+    "build": "npm run build:server && npm run build:front",
+    "start": "node ./dist/index.js"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "description": "",
+  "devDependencies": {
+    "@types/cors": "^2.8.19",
+    "@types/express": "^5.0.3",
+    "@types/node": "^24.3.0",
+    "buffer": "^6.0.3",
+    "crypto-browserify": "^3.12.1",
+    "events": "^3.3.0",
+    "nodemon": "^3.1.10",
+    "os-browserify": "^0.3.0",
+    "parcel": "^2.15.4",
+    "path-browserify": "^1.0.1",
+    "process": "^0.11.10",
+    "stream-browserify": "^3.0.0",
+    "vm-browserify": "^1.1.2"
+  },
+  "dependencies": {
+    "cors": "^2.8.5",
+    "dotenv": "^17.2.1",
+    "express": "^5.1.0",
+    "firebase": "^12.2.1",
+    "firebase-admin": "^13.5.0",
+    "nanoid": "^5.1.5"
+  }
+}

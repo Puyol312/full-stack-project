@@ -1,0 +1,11 @@
+{
+  "compilerOptions": {
+    "outDir": "./dist",
+    "rootDir": "./server",
+    "module": "nodenext",
+    "target": "esnext",
+    "esModuleInterop": true,
+    "strict": true
+  },
+  "exclude": ["client", "node_modules"]
+}
