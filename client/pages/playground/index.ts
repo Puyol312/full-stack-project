@@ -20,6 +20,7 @@ export function initPlayground(router: any): HTMLElement{
   } else {
     const callbackPlay = () => { 
       if (state.bothReady()) { 
+        state.setA();
         state.unsubscribe(callbackPlay);
         router.goTo("/game");
       }

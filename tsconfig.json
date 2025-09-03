@@ -1,6 +1,6 @@
 {
   "compilerOptions": {
-    "outDir": "./dist",
+    "outDir": "./server/dist",
     "rootDir": "./server",
     "module": "nodenext",
     "target": "esnext",

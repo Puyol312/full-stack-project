@@ -974,6 +974,7 @@ class State {
     ready;
     bloqueandoNotify = false;
     end = false;
+    A = false;
     listeners;
     constructor(){
         // Intentar cargar desde localStorage
@@ -1162,11 +1163,14 @@ class State {
         if (!this.currentGame.game.computerPlay && data.choice && !this.bloqueandoNotify) {
             console.log("estoy entrando", this.bloqueandoNotify);
             this.currentGame.game.computerPlay = data.choice;
-            flag = true;
-        // flag = false;
+            if (this.A && !this.esperarJugadaDelOponente()) flag = false;
+            else flag = this.esperarJugadaDelOponente();
         }
         if (this.end) this.resetReady();
         if (!this.bloqueandoNotify && flag) this.notify();
+    }
+    setA() {
+        this.A = !this.A;
     }
     actualizarInformacion(task, campo) {
         let jugador = this.currentGame.owner ? "Jugador1" : "Jugador2";
@@ -1195,8 +1199,7 @@ class State {
     setMove(myMove) {
         this.actualizarInformacion(myMove, "choice");
         this.currentGame.game.myPlay = myMove;
-        // if (this.esperarJugadaDelOponente())
-        this.notify();
+        if (this.A && this.esperarJugadaDelOponente() || !this.A && this.esperarJugadaDelOponente()) this.notify();
     }
     solveRules() {
         if (this.currentGame.game.computerPlay) this.currentGame.game.computerPlay = null;
@@ -1215,11 +1218,12 @@ class State {
             this.ready.me = false;
             this.ready.oponent = false;
             this.end = false;
+            this.A = false;
             this.actualizarInformacion(false, "start");
             this.actualizarInformacion(false, "choice");
             setTimeout(()=>{
                 this.bloqueandoNotify = false;
-                console.log(State.getInstance());
+                console.log(this);
             }, 3000);
         }
     }
@@ -16845,6 +16849,7 @@ function initPlayground(router) {
     else {
         const callbackPlay = ()=>{
             if (state.bothReady()) {
+                state.setA();
                 state.unsubscribe(callbackPlay);
                 router.goTo("/game");
             }
@@ -16900,7 +16905,7 @@ class CircleCountdown extends HTMLElement {
     shadow = this.attachShadow({
         mode: "open"
     });
-    counter = 3;
+    counter = 5;
     intervalId = null;
     connectedCallback() {
         this.render();

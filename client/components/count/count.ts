@@ -3,7 +3,7 @@ import { aleatorySelection } from "../../utils/aleatorySelection";
 
 class CircleCountdown extends HTMLElement {
   shadow = this.attachShadow({ mode: "open" });
-  counter = 3;
+  counter = 5;
   intervalId: number | null = null;
 
   connectedCallback() {

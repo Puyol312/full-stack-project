@@ -37,6 +37,7 @@ class State {
   };
   private bloqueandoNotify: boolean = false;
   private end: boolean = false;
+  private A: boolean = false;
   private listeners: (() => any)[];
 
   private constructor() { 
@@ -225,9 +226,12 @@ class State {
     }
     if ((!this.currentGame.game.computerPlay) && data.choice && !this.bloqueandoNotify) {
       console.log("estoy entrando", this.bloqueandoNotify);
-      this.currentGame.game.computerPlay = data.choice; 
-      flag = true;
-      // flag = false;
+      this.currentGame.game.computerPlay = data.choice;
+      if (this.A && !this.esperarJugadaDelOponente()) {
+        flag = false;
+      } else { 
+        flag = this.esperarJugadaDelOponente();
+      }
     }
     if (this.end) {
       this.resetReady();
@@ -235,6 +239,9 @@ class State {
     if (!this.bloqueandoNotify && flag) {
       this.notify();
     }
+  }
+  public setA() { 
+    this.A = !this.A;
   }
   private actualizarInformacion(task: any, campo: string) {
     let jugador = this.currentGame.owner ? "Jugador1" : "Jugador2";
@@ -267,8 +274,9 @@ class State {
   public setMove(myMove: Jugada) {
     this.actualizarInformacion(myMove, "choice");
     this.currentGame.game.myPlay = myMove;
-    // if (this.esperarJugadaDelOponente())
+    if ((this.A && this.esperarJugadaDelOponente()) || (!this.A && this.esperarJugadaDelOponente())) { 
       this.notify();
+    }
   }
   public solveRules() { 
     if (this.currentGame.game.computerPlay) { 
@@ -288,13 +296,14 @@ class State {
       this.ready.me = false;
       this.ready.oponent = false;
       this.end = false;
+      this.A = false;
       
       this.actualizarInformacion(false, "start");
       this.actualizarInformacion(false, "choice");
   
       setTimeout(() => {
         this.bloqueandoNotify = false;
-        console.log(State.getInstance())
+        console.log(this);
       }, 3000);
     }
   }
