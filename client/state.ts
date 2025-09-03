@@ -36,7 +36,6 @@ class State {
     oponent:boolean
   };
   private bloqueandoNotify: boolean = false;
-  private end: boolean = false;
   private A: boolean = false;
   private listeners: (() => any)[];
 
@@ -92,9 +91,6 @@ class State {
     return this.currentGame.game;
   }
 
-  public setEnd(end:boolean) { 
-    this.end = end;
-  }
   public getHistory(): History { 
     return { oponent: this.history.oponent , games: [...this.history.games], roomId:this.history.roomId };
   }
@@ -215,29 +211,28 @@ class State {
       })
   }
   private escucharOponente(data: any) {
-    let flag = false;
-    if (!(this.history.oponent) && data.name) { 
-      this.history.oponent = data.name;
-      flag = true;
-    }
-    if (!(this.ready.oponent) && data.start) {
-      this.ready.oponent = data.start;
-      flag = true;
-    }
-    if ((!this.currentGame.game.computerPlay) && data.choice && !this.bloqueandoNotify) {
-      console.log("estoy entrando", this.bloqueandoNotify);
-      this.currentGame.game.computerPlay = data.choice;
-      if (this.A && !this.esperarJugadaDelOponente()) {
-        flag = false;
-      } else { 
-        flag = this.esperarJugadaDelOponente();
+    if (!data.reset) {
+      let flag = false;
+      if (!(this.history.oponent) && data.name) {
+        this.history.oponent = data.name;
+        flag = true;
       }
-    }
-    if (this.end) {
-      this.resetReady();
-    }
-    if (!this.bloqueandoNotify && flag) {
-      this.notify();
+      if (!(this.ready.oponent) && data.start) {
+        this.ready.oponent = data.start;
+        flag = true;
+      }
+      if ((!this.currentGame.game.computerPlay) && data.choice && !this.bloqueandoNotify) {
+        console.log("estoy entrando", this.bloqueandoNotify);
+        this.currentGame.game.computerPlay = data.choice;
+        if (this.A && !this.esperarJugadaDelOponente()) {
+          flag = false;
+        } else {
+          flag = this.esperarJugadaDelOponente();
+        }
+      }
+      if (!this.bloqueandoNotify && flag) {
+        this.notify();
+      }
     }
   }
   public setA() { 
@@ -266,6 +261,7 @@ class State {
   }
   public aceptarReglas() { 
     this.ready.me = true;
+    this.actualizarInformacion(false, "reset");
     this.actualizarInformacion(true, "start");
   }
   public bothReady(): boolean {
@@ -289,15 +285,14 @@ class State {
     return ((this.currentGame.game.computerPlay != null) && (this.currentGame.game.myPlay != null));
   }
   public resetReady() {
-    if (this.end) { 
       this.bloqueandoNotify = true;
   
       this.currentGame.game = { myPlay: null, computerPlay: null };
       this.ready.me = false;
       this.ready.oponent = false;
-      this.end = false;
       this.A = false;
       
+      this.actualizarInformacion(true, "reset");
       this.actualizarInformacion(false, "start");
       this.actualizarInformacion(false, "choice");
   
@@ -305,7 +300,6 @@ class State {
         this.bloqueandoNotify = false;
         console.log(this);
       }, 3000);
-    }
   }
   public whoWins(myPlay: Jugada, computerPlay: Jugada): Resultado { 
     let res: Resultado;

@@ -973,7 +973,6 @@ class State {
     user;
     ready;
     bloqueandoNotify = false;
-    end = false;
     A = false;
     listeners;
     constructor(){
@@ -1041,9 +1040,6 @@ class State {
     }
     getState() {
         return this.currentGame.game;
-    }
-    setEnd(end) {
-        this.end = end;
     }
     getHistory() {
         return {
@@ -1151,23 +1147,24 @@ class State {
         });
     }
     escucharOponente(data) {
-        let flag = false;
-        if (!this.history.oponent && data.name) {
-            this.history.oponent = data.name;
-            flag = true;
+        if (!data.reset) {
+            let flag = false;
+            if (!this.history.oponent && data.name) {
+                this.history.oponent = data.name;
+                flag = true;
+            }
+            if (!this.ready.oponent && data.start) {
+                this.ready.oponent = data.start;
+                flag = true;
+            }
+            if (!this.currentGame.game.computerPlay && data.choice && !this.bloqueandoNotify) {
+                console.log("estoy entrando", this.bloqueandoNotify);
+                this.currentGame.game.computerPlay = data.choice;
+                if (this.A && !this.esperarJugadaDelOponente()) flag = false;
+                else flag = this.esperarJugadaDelOponente();
+            }
+            if (!this.bloqueandoNotify && flag) this.notify();
         }
-        if (!this.ready.oponent && data.start) {
-            this.ready.oponent = data.start;
-            flag = true;
-        }
-        if (!this.currentGame.game.computerPlay && data.choice && !this.bloqueandoNotify) {
-            console.log("estoy entrando", this.bloqueandoNotify);
-            this.currentGame.game.computerPlay = data.choice;
-            if (this.A && !this.esperarJugadaDelOponente()) flag = false;
-            else flag = this.esperarJugadaDelOponente();
-        }
-        if (this.end) this.resetReady();
-        if (!this.bloqueandoNotify && flag) this.notify();
     }
     setA() {
         this.A = !this.A;
@@ -1191,6 +1188,7 @@ class State {
     }
     aceptarReglas() {
         this.ready.me = true;
+        this.actualizarInformacion(false, "reset");
         this.actualizarInformacion(true, "start");
     }
     bothReady() {
@@ -1209,23 +1207,21 @@ class State {
         return this.currentGame.game.computerPlay != null && this.currentGame.game.myPlay != null;
     }
     resetReady() {
-        if (this.end) {
-            this.bloqueandoNotify = true;
-            this.currentGame.game = {
-                myPlay: null,
-                computerPlay: null
-            };
-            this.ready.me = false;
-            this.ready.oponent = false;
-            this.end = false;
-            this.A = false;
-            this.actualizarInformacion(false, "start");
-            this.actualizarInformacion(false, "choice");
-            setTimeout(()=>{
-                this.bloqueandoNotify = false;
-                console.log(this);
-            }, 3000);
-        }
+        this.bloqueandoNotify = true;
+        this.currentGame.game = {
+            myPlay: null,
+            computerPlay: null
+        };
+        this.ready.me = false;
+        this.ready.oponent = false;
+        this.A = false;
+        this.actualizarInformacion(true, "reset");
+        this.actualizarInformacion(false, "start");
+        this.actualizarInformacion(false, "choice");
+        setTimeout(()=>{
+            this.bloqueandoNotify = false;
+            console.log(this);
+        }, 3000);
     }
     whoWins(myPlay, computerPlay) {
         let res;
@@ -16822,7 +16818,6 @@ function initRules(router) {
         }, 1000);
         else router.goTo('/playground');
     });
-    (0, _state.State).getInstance().setEnd(false);
     return div;
 }
 
@@ -17031,7 +17026,6 @@ function initResult(router) {
       </div>
       `);
         const boton = div.querySelector("#volverAjugar");
-        state.setEnd(true);
         boton?.addEventListener("click", (e)=>{
             e.stopPropagation();
             state.resetReady();

@@ -25,6 +25,5 @@ export function initRules(router:any):HTMLElement{
       router.goTo('/playground');
     }
   });
-  State.getInstance().setEnd(false);
   return div;
 }

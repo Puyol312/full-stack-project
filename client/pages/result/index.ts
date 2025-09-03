@@ -33,7 +33,6 @@ export function initResult(router: any): HTMLElement{
       `
     );
     const boton = div.querySelector("#volverAjugar");
-    state.setEnd(true);
     boton?.addEventListener("click", (e) => {
       e.stopPropagation();
       state.resetReady();
