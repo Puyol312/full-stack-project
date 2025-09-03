@@ -83,7 +83,8 @@ class CircleCountdown extends HTMLElement {
     `;
 
     State.getInstance().subscribe(() => {
-      this.stop();
+      if(State.getInstance().getState().myPlay)
+        this.stop();
     });
   }
 }

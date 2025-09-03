@@ -13,12 +13,18 @@ export function initRules(router:any):HTMLElement{
       <div class="contenedor-rules-texto">
         <p>Presiona jugar y elegi: piedra, papel o tijera antes de que pasen los 3 segundos.</p>
       </div>
-      <mi-boton name="¡Jugar!"></mi-boton>
+      <mi-boton id="jugar" name="¡Jugar!"></mi-boton>
       <multi-hand></multi-hand>
   `;
-  div.querySelector("mi-boton")?.addEventListener('click', () => {
-    State.getInstance().iniciarJuego();
-    router.goTo('/playground');
-  })
+  // State.getInstance().solveRules();
+  div.querySelector("#jugar")?.addEventListener('click', () => {
+    State.getInstance().aceptarReglas();
+    if (State.getInstance().bothReady()) {
+      setTimeout(() => {router.goTo('/game');}, 1000)
+    } else {
+      router.goTo('/playground');
+    }
+  });
+  State.getInstance().setEnd(false);
   return div;
 }

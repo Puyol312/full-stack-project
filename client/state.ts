@@ -3,10 +3,10 @@ import { database, ref, onValue } from "./rtdb";
 //@ts-ignore
 const apiUrl = process.env.API_URL ?? "http://localhost:8080";
 
-type Jugada = "piedra" | "papel" | "tijera" | "";
+type Jugada = "piedra" | "papel" | "tijera" | null;
 type Game = {
-  computerPlay:Jugada,
-  myPlay:Jugada,
+  computerPlay:Jugada | null,
+  myPlay:Jugada | null,
 }
 type History = {
   games: Game[],
@@ -25,39 +25,47 @@ type User = {
 
 class State {
   private static instance: State;
-  private currentGame: Game;
+  private currentGame: {
+    game: Game,
+    owner:boolean
+  };
   private history: History;
   private user: User | null;
-  private ready:boolean;
+  private ready: {
+    me: boolean,
+    oponent:boolean
+  };
+  private bloqueandoNotify: boolean = false;
+  private end: boolean = false;
   private listeners: (() => any)[];
 
   private constructor() { 
     // Intentar cargar desde localStorage
-    const savedData = localStorage.getItem("gameState");
+    const savedData = sessionStorage.getItem("gameState");
     if (savedData) {
       const parsed = JSON.parse(savedData);
-      this.currentGame = parsed.currentGame || { computerPlay: "", myPlay: "" };
+      this.currentGame = parsed.currentGame || {game:{ computerPlay: null, myPlay: null }, owner:false};
       this.history = parsed.history || { games: [], roomId: undefined, oponent: undefined };
       this.user = parsed.user || null;
-      this.ready = false;
+      this.ready = { me: false ,oponent: false};
     } else {
-      this.currentGame = { computerPlay: "", myPlay: "" };
+      this.currentGame = {game:{ computerPlay: null, myPlay: null }, owner:false};
       this.history = { games: [], roomId: undefined , oponent: undefined};
       this.user = null;
-      this.ready = false;
+      this.ready = { me: false ,oponent: false};
     }
     this.listeners = [];
   }
 
-  private saveHistory(game: Game) { 
+  public saveHistory(game: Game) { 
     if (game && game.computerPlay && game.myPlay) {
       this.history.games.push(game);
-      this.saveToLocalStorage();
+      this.saveTosessionStorage();
     }
   }
 
-  private saveToLocalStorage() {
-    localStorage.setItem(
+  private saveTosessionStorage() {
+    sessionStorage.setItem(
       "gameState",
       JSON.stringify({
         currentGame: this.currentGame,
@@ -80,9 +88,12 @@ class State {
   }
 
   public getState(): Game { 
-    return this.currentGame;
+    return this.currentGame.game;
   }
 
+  public setEnd(end:boolean) { 
+    this.end = end;
+  }
   public getHistory(): History { 
     return { oponent: this.history.oponent , games: [...this.history.games], roomId:this.history.roomId };
   }
@@ -112,7 +123,7 @@ class State {
         name:nombre,
         id: data.id
       }
-      this.saveToLocalStorage();
+      this.saveTosessionStorage();
       if (create) { 
         this.createSala(data.id);
       }
@@ -141,7 +152,7 @@ class State {
     })
     .then(data => {
       this.history.roomId = data.id;
-      this.saveToLocalStorage();
+      this.saveTosessionStorage();
       this.notify();
       this.conectarRTDB(data.id);
     })
@@ -168,21 +179,11 @@ class State {
           if (snapshot.exists()) {
             const data = snapshot.val();
             if (data.owner === this.user?.id) {
+              this.currentGame.owner = true;
               const oponenteRef = ref(database, 'salas/' + res.idLargo + '/currentGame/Jugador2');
-              const jugadorRef = ref(database, 'salas/' + res.idLargo + '/currentGame/Jugador1');
-              onValue(oponenteRef, (snap) => { 
+              onValue(oponenteRef, (snap) => {
                 const data = snap.val();
-                if (!(this.history.oponent) && data.name) { 
-                  this.history.oponent = data.name;
-                  this.notify();
-                }
-                if (data.start && !this.ready) { 
-                  this.ready = true;
-                  this.notify();
-                }
-                if (data.choise !== false) { 
-                  this.getState().computerPlay = data.choise
-                }
+                this.escucharOponente(data);
               })
             } else {
               const oponenteRef = ref(database, 'salas/' + res.idLargo + '/currentGame/Jugador1');
@@ -202,130 +203,98 @@ class State {
               })
               onValue(oponenteRef, (snap) => {
                 const dataOp = snap.val();
-                if (dataOp.start && !this.ready) { 
-                  this.ready = true;
-                  this.notify();
-                }
-                if (dataOp.choise !== false) { 
-                  this.getState().computerPlay = dataOp.choise 
-                }
+                this.escucharOponente(dataOp);
               });
             }
           }
-          this.notify();
         })
           .catch(error => {
             console.error('Error al conectar a la RTDB:', error);
           });
       })
   }
-  public iniciarJuego() { 
-    fetch(apiUrl + "/salas/" + this.user?.id + "?salaID=" + this.history.roomId,
-      {
-        method: 'GET',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-      })
-      .then(response => {
-        if (!response.ok) 
-          throw new Error('Error en la respuesta de la API');
-        return response.json();
-      })
-      .then(res => { 
-        const roomRef = ref(database, 'salas/' + res.idLargo);
-        get(roomRef).then((snapshot) => {
-          if (snapshot.exists()) {
-            const data = snapshot.val();
-            if (data.owner === this.user?.id) {;
-              const jugadorRef = ref(database, 'salas/' + res.idLargo + '/currentGame/Jugador1');
-              update(jugadorRef, {
-                start: true
-              })
-            } else { 
-              const jugadorRef = ref(database, 'salas/' + res.idLargo + '/currentGame/Jugador2');
-              update(jugadorRef, {
-                start:true
-              })
-            }
-          }
-        })
-      })
+  private escucharOponente(data: any) {
+    let flag = false;
+    if (!(this.history.oponent) && data.name) { 
+      this.history.oponent = data.name;
+      flag = true;
+    }
+    if (!(this.ready.oponent) && data.start) {
+      this.ready.oponent = data.start;
+      flag = true;
+    }
+    if ((!this.currentGame.game.computerPlay) && data.choice) { 
+      this.currentGame.game.computerPlay = data.choice; 
+      flag = true;
+    }
+    if (this.end) {
+      this.resetReady();
+    }
+    if (!this.bloqueandoNotify && flag) {
+      this.notify();
+    }
   }
-  public getReady():boolean { 
-    return this.ready;
+  private actualizarInformacion(task: any, campo: string) {
+    let jugador = this.currentGame.owner ? "Jugador1" : "Jugador2";
+    fetch(apiUrl + "/salas/" + this.user?.id +"?salaID=" + this.history.roomId, {
+      method: 'GET',
+      headers: {
+      'Content-Type': 'application/json',
+          },
+    })
+    .then(response => {
+      if (!response.ok) {
+        throw new Error('Error en la respuesta de la API');
+      }
+      return response.json();
+    })
+    .then(res => { 
+      const jugadorRef = ref(database, 'salas/' + res.idLargo + '/currentGame/' + jugador);
+      update(jugadorRef, {
+        [campo]: task
+      });
+    })
+  }
+  public aceptarReglas() { 
+    this.ready.me = true;
+    this.actualizarInformacion(true, "start");
+  }
+  public bothReady(): boolean {
+    return this.ready.me && this.ready.oponent;
   }
   public setMove(myMove: Jugada) {
-    fetch(apiUrl + "/salas/" + this.user?.id + "?salaID=" + this.history.roomId,
-      {
-        method: 'GET',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-      })
-      .then(response => {
-        if (!response.ok) 
-          throw new Error('Error en la respuesta de la API');
-        return response.json();
-      })
-      .then(res => { 
-        const roomRef = ref(database, 'salas/' + res.idLargo);
-        get(roomRef).then((snapshot) => {
-          if (snapshot.exists()) {
-            const data = snapshot.val();
-            if (data.owner === this.user?.id) {;
-              const jugadorRef = ref(database, 'salas/' + res.idLargo + '/currentGame/Jugador1');
-              update(jugadorRef, {
-                choise: myMove
-              })
-            } else { 
-              const jugadorRef = ref(database, 'salas/' + res.idLargo + '/currentGame/Jugador2');
-              update(jugadorRef, {
-                choise:myMove
-              })
-            }
-          }
-        })
-      })
-    this.getState().myPlay = myMove;
-    if (this.getState().computerPlay)
+    this.actualizarInformacion(myMove, "choice");
+    this.currentGame.game.myPlay = myMove;
+    if (this.esperarJugadaDelOponente())
       this.notify();
   }
-  setReady() {
-    this.ready = false;
-    fetch(apiUrl + "/salas/" + this.user?.id + "?salaID=" + this.history.roomId,
-      {
-        method: 'GET',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-      })
-      .then(response => {
-        if (!response.ok) 
-          throw new Error('Error en la respuesta de la API');
-        return response.json();
-      })
-      .then(res => { 
-        const roomRef = ref(database, 'salas/' + res.idLargo);
-        get(roomRef).then((snapshot) => {
-          if (snapshot.exists()) {
-            const data = snapshot.val();
-            if (data.owner === this.user?.id) {;
-              const jugadorRef = ref(database, 'salas/' + res.idLargo + '/currentGame/Jugador1');
-              update(jugadorRef, {
-                start: false,
-                choise: false
-              })
-            } else { 
-              const jugadorRef = ref(database, 'salas/' + res.idLargo + '/currentGame/Jugador2');
-              update(jugadorRef, {
-                start: false,
-                choise:false
-              })
-            }
-          }
-        })
-      })
+  public solveRules() { 
+    if (this.currentGame.game.computerPlay) { 
+      this.currentGame.game.computerPlay = null;
+    } if (this.currentGame.game.myPlay) {
+      this.currentGame.game.myPlay = null;
+    }
+  }
+  public esperarJugadaDelOponente():boolean { 
+    return ((this.currentGame.game.computerPlay != null) && (this.currentGame.game.myPlay != null));
+  }
+  public resetReady() {
+    if (this.end) { 
+      this.bloqueandoNotify = true;
+  
+      this.currentGame.game = { myPlay: null, computerPlay: null };
+      this.ready.me = false;
+      this.ready.oponent = false;
+      this.end = false;
+      
+      this.actualizarInformacion(false, "start");
+      this.actualizarInformacion(false, "choice");
+  
+      setTimeout(() => {
+        this.bloqueandoNotify = false;
+        console.log(State.getInstance())
+      }, 1000);
+    }
   }
   public whoWins(myPlay: Jugada, computerPlay: Jugada): Resultado { 
     let res: Resultado;
@@ -345,6 +314,9 @@ class State {
 
   public subscribe(callback: () => any) { 
     this.listeners.push(callback);
+  }
+  public unsubscribe(callback: () => any) {
+    this.listeners = this.listeners.filter(fn => fn !== callback);
   }
 }
 

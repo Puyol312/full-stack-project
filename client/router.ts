@@ -47,7 +47,7 @@ export function initRouter(container: Element) {
 
   function goTo(path) { 
     history.pushState({}, "", basePath + path);
-    handleRoute(path);
+    handleRoute(getCurrentPath());
   }
   function getCurrentPath() {
     return location.pathname.replace(basePath, "") || "/";

@@ -60,7 +60,7 @@ export function initSala(router: any): HTMLElement{
     setTimeout(() => {
       state.conectarRTDB(sala);
       router.goTo("/rules");
-    }, 2000);
+    }, 1000);
   });
   return div;
 }

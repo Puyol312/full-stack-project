@@ -2,15 +2,17 @@ import express from "express";
 import cors from "cors"
 import { firestore, rtdb } from "./db";
 import { nanoid } from "nanoid";
-
+import path from "path";
 const PORT = process.env.PORT || 8080;
 const usersCollection = firestore.collection("users");
 const salasCollection = firestore.collection("salas");
+
 
 const app = express();
 
 app.use(express.json());
 app.use(cors());
+app.use(express.static(path.join(__dirname, "../dist")));
 
 app.post("/users", (req, res) => {
   const userId = nanoid();
@@ -49,14 +51,14 @@ app.post("/salas", async (req, res) => {
           name: name,
           online: true,
           start: false,
-          choise: false
+          choice: false
         },
         Jugador2: {
           id: null,
           name: null,
           online: false,
           start: false,
-          choise: false
+          choice: false
         }
       },
       owner: userId
@@ -77,13 +79,13 @@ app.get("/salas/:id", async (req, res) => {
   if (!id || !idCorto) {
     return res.status(400).json({ error: "ID requerido" });
   }
-
+  
   try {
     const user = await usersCollection.doc(id).get();
     if (!user.exists) {
       return res.status(404).json({ error: "Usuario no encontrado" });
     }
-
+    
     const sala = await salasCollection.doc(idCorto).get();
     if (!sala.exists) {
       return res.status(404).json({ error: "Sala no encontrada" });
@@ -94,7 +96,9 @@ app.get("/salas/:id", async (req, res) => {
     res.status(500).json({ error: "Error interno del servidor" });
   }
 });
-
+app.get(/.*/, (req, res) => {
+  res.sendFile(path.join(__dirname, "../dist", "index.html"));
+});
 app.listen(PORT, () => {
   console.log(`Listening at: -> http://localhost:${PORT} <-`);
 });

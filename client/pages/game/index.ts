@@ -5,7 +5,8 @@ import "./game.css"
 import { State } from "../../state";
 import { aleatorySelection } from "../../utils/aleatorySelection";
 
-export function initGame(something:any):HTMLElement{
+export function initGame(router: any): HTMLElement{
+  const state = State.getInstance();
   const div = document.createElement("div");
   div.classList.add("contenedor-game")
   div.innerHTML = `
@@ -14,25 +15,20 @@ export function initGame(something:any):HTMLElement{
     </div>
     <multi-hand></multi-hand>
   `;
-  // aqui va el custom-event
   const manos = div.querySelector("multi-hand") as HandsEl;
   manos?.activeSelector();
   const el = div.querySelector("circle-countdown");
-  State.getInstance().subscribe(() => {
-    const state = State.getInstance();
-    const { myPlay, computerPlay } = state.getState();
-
-    if (myPlay && computerPlay) {
-      state.setReady();
-
-      setTimeout(() => {
-        something.goTo("/result");
-      }, 2000);
-    }
-  });
   el?.addEventListener("countdown-finished", (event) => {
     event.stopPropagation();
-    State.getInstance().setMove(aleatorySelection());
+    state.setMove(aleatorySelection());
   });
+  const callback = () => {
+    if (state.esperarJugadaDelOponente()) { 
+      state.saveHistory(state.getState());
+      router.goTo("/result");
+      state.unsubscribe(callback);
+    }
+  } 
+  state.subscribe(callback);
   return div;
 }
