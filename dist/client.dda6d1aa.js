@@ -1158,7 +1158,6 @@ class State {
                 flag = true;
             }
             if (!this.currentGame.game.computerPlay && data.choice && !this.bloqueandoNotify) {
-                console.log("estoy entrando", this.bloqueandoNotify);
                 this.currentGame.game.computerPlay = data.choice;
                 if (this.A && !this.esperarJugadaDelOponente()) flag = false;
                 else flag = this.esperarJugadaDelOponente();
@@ -1186,10 +1185,27 @@ class State {
             });
         });
     }
+    actualizarConjuntoInformacion(data) {
+        let jugador = this.currentGame.owner ? "Jugador1" : "Jugador2";
+        fetch(apiUrl + "/salas/" + this.user?.id + "?salaID=" + this.history.roomId, {
+            method: 'GET',
+            headers: {
+                'Content-Type': 'application/json'
+            }
+        }).then((response)=>{
+            if (!response.ok) throw new Error('Error en la respuesta de la API');
+            return response.json();
+        }).then((res)=>{
+            const jugadorRef = (0, _rtdb.ref)((0, _rtdb.database), 'salas/' + res.idLargo + '/currentGame/' + jugador);
+            (0, _database.update)(jugadorRef, data);
+        });
+    }
     aceptarReglas() {
         this.ready.me = true;
-        this.actualizarInformacion(false, "reset");
-        this.actualizarInformacion(true, "start");
+        this.actualizarConjuntoInformacion({
+            reset: false,
+            start: true
+        });
     }
     bothReady() {
         return this.ready.me && this.ready.oponent;
@@ -1215,13 +1231,14 @@ class State {
         this.ready.me = false;
         this.ready.oponent = false;
         this.A = false;
-        this.actualizarInformacion(true, "reset");
-        this.actualizarInformacion(false, "start");
-        this.actualizarInformacion(false, "choice");
+        this.actualizarConjuntoInformacion({
+            reset: true,
+            start: false,
+            choice: false
+        });
         setTimeout(()=>{
             this.bloqueandoNotify = false;
-            console.log(this);
-        }, 3000);
+        }, 1000);
     }
     whoWins(myPlay, computerPlay) {
         let res;

@@ -222,7 +222,6 @@ class State {
         flag = true;
       }
       if ((!this.currentGame.game.computerPlay) && data.choice && !this.bloqueandoNotify) {
-        console.log("estoy entrando", this.bloqueandoNotify);
         this.currentGame.game.computerPlay = data.choice;
         if (this.A && !this.esperarJugadaDelOponente()) {
           flag = false;
@@ -259,10 +258,31 @@ class State {
       });
     })
   }
+    private actualizarConjuntoInformacion(data:object) {
+    let jugador = this.currentGame.owner ? "Jugador1" : "Jugador2";
+    fetch(apiUrl + "/salas/" + this.user?.id +"?salaID=" + this.history.roomId, {
+      method: 'GET',
+      headers: {
+      'Content-Type': 'application/json',
+          },
+    })
+    .then(response => {
+      if (!response.ok) {
+        throw new Error('Error en la respuesta de la API');
+      }
+      return response.json();
+    })
+    .then(res => { 
+      const jugadorRef = ref(database, 'salas/' + res.idLargo + '/currentGame/' + jugador);
+      update(jugadorRef,data);
+    })
+  }
   public aceptarReglas() { 
     this.ready.me = true;
-    this.actualizarInformacion(false, "reset");
-    this.actualizarInformacion(true, "start");
+    this.actualizarConjuntoInformacion({
+      reset: false,
+      start:true
+    })
   }
   public bothReady(): boolean {
     return this.ready.me && this.ready.oponent;
@@ -291,15 +311,14 @@ class State {
       this.ready.me = false;
       this.ready.oponent = false;
       this.A = false;
-      
-      this.actualizarInformacion(true, "reset");
-      this.actualizarInformacion(false, "start");
-      this.actualizarInformacion(false, "choice");
-  
+      this.actualizarConjuntoInformacion({
+        reset: true,
+        start: false,
+        choice: false
+      });
       setTimeout(() => {
         this.bloqueandoNotify = false;
-        console.log(this);
-      }, 3000);
+      }, 1000);
   }
   public whoWins(myPlay: Jugada, computerPlay: Jugada): Resultado { 
     let res: Resultado;
