@@ -1159,9 +1159,11 @@ class State {
             this.ready.oponent = data.start;
             flag = true;
         }
-        if (!this.currentGame.game.computerPlay && data.choice) {
+        if (!this.currentGame.game.computerPlay && data.choice && !this.bloqueandoNotify) {
+            console.log("estoy entrando", this.bloqueandoNotify);
             this.currentGame.game.computerPlay = data.choice;
             flag = true;
+        // flag = false;
         }
         if (this.end) this.resetReady();
         if (!this.bloqueandoNotify && flag) this.notify();
@@ -1193,7 +1195,8 @@ class State {
     setMove(myMove) {
         this.actualizarInformacion(myMove, "choice");
         this.currentGame.game.myPlay = myMove;
-        if (this.esperarJugadaDelOponente()) this.notify();
+        // if (this.esperarJugadaDelOponente())
+        this.notify();
     }
     solveRules() {
         if (this.currentGame.game.computerPlay) this.currentGame.game.computerPlay = null;
@@ -1217,7 +1220,7 @@ class State {
             setTimeout(()=>{
                 this.bloqueandoNotify = false;
                 console.log(State.getInstance());
-            }, 1000);
+            }, 3000);
         }
     }
     whoWins(myPlay, computerPlay) {
@@ -16897,7 +16900,7 @@ class CircleCountdown extends HTMLElement {
     shadow = this.attachShadow({
         mode: "open"
     });
-    counter = 5;
+    counter = 3;
     intervalId = null;
     connectedCallback() {
         this.render();

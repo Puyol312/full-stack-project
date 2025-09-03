@@ -223,9 +223,11 @@ class State {
       this.ready.oponent = data.start;
       flag = true;
     }
-    if ((!this.currentGame.game.computerPlay) && data.choice) { 
+    if ((!this.currentGame.game.computerPlay) && data.choice && !this.bloqueandoNotify) {
+      console.log("estoy entrando", this.bloqueandoNotify);
       this.currentGame.game.computerPlay = data.choice; 
       flag = true;
+      // flag = false;
     }
     if (this.end) {
       this.resetReady();
@@ -265,7 +267,7 @@ class State {
   public setMove(myMove: Jugada) {
     this.actualizarInformacion(myMove, "choice");
     this.currentGame.game.myPlay = myMove;
-    if (this.esperarJugadaDelOponente())
+    // if (this.esperarJugadaDelOponente())
       this.notify();
   }
   public solveRules() { 
@@ -293,7 +295,7 @@ class State {
       setTimeout(() => {
         this.bloqueandoNotify = false;
         console.log(State.getInstance())
-      }, 1000);
+      }, 3000);
     }
   }
   public whoWins(myPlay: Jugada, computerPlay: Jugada): Resultado { 
