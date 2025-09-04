@@ -6,6 +6,7 @@ import { initRules } from "./pages/rules";
 import { initPlayground } from "./pages/playground";
 import { initGame } from "./pages/game";
 import { initResult } from "./pages/result";
+import { initNotFound } from "./pages/notFound";
 
 var routes = [
   {
@@ -15,6 +16,10 @@ var routes = [
   {
     path: /\/nuevo-juego/,
     component:initNuevo
+  },
+  {
+    path: /\/notFound/,
+    component:initNotFound
   },
   {
     path: /\/loby/,

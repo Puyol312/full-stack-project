@@ -157,59 +157,70 @@ class State {
       throw new Error('Error en al transcribir la respuesta del servidor');
     });
   }
-  public conectarRTDB(idCorto:string) { 
-    fetch(apiUrl + "/salas/" + this.user?.id +"?salaID=" + idCorto, {
-      method: 'GET',
-      headers: {
-        'Content-Type': 'application/json',
-      },
+public conectarRTDB(idCorto: string): Promise<void> {
+  return fetch(apiUrl + "/salas/" + this.user?.id + "?salaID=" + idCorto, {
+    method: 'GET',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+  })
+    .then(response => {
+      if (!response.ok) {
+        throw new Error('Error en la respuesta de la API');
+      }
+      return response.json();
     })
-      .then(response => {
-        if (!response.ok) {
-          throw new Error('Error en la respuesta de la API');
+    .then(res => {
+      const roomRef = ref(database, 'salas/' + res.idLargo);
+      return get(roomRef).then(snapshot => {
+        if (!snapshot.exists()) {
+          throw new Error("La sala no existe en la RTDB");
         }
-        return response.json();
-      })
-      .then(res => {
-        const roomRef = ref(database, 'salas/' + res.idLargo);
-        get(roomRef).then((snapshot) => {
-          if (snapshot.exists()) {
-            const data = snapshot.val();
-            if (data.owner === this.user?.id) {
-              this.currentGame.owner = true;
-              const oponenteRef = ref(database, 'salas/' + res.idLargo + '/currentGame/Jugador2');
-              onValue(oponenteRef, (snap) => {
-                const data = snap.val();
-                this.escucharOponente(data);
-              })
-            } else {
-              const oponenteRef = ref(database, 'salas/' + res.idLargo + '/currentGame/Jugador1');
-              const jugadorRef = ref(database, 'salas/' + res.idLargo + '/currentGame/Jugador2');
-              this.history.roomId = idCorto;
-              update(jugadorRef, {
-                name: this.user?.name,
-                id: this.user?.id,
-                online: true
-              });
-              get(oponenteRef).then((snapShot) => { 
-                if (snapShot.exists()) { 
+
+        const data = snapshot.val();
+
+        if (data.owner === this.user?.id) {
+          // Soy owner
+          this.currentGame.owner = true;
+          const oponenteRef = ref(database, 'salas/' + res.idLargo + '/currentGame/Jugador2');
+          onValue(oponenteRef, (snap) => {
+            this.escucharOponente(snap.val());
+          });
+        } else {
+          // Soy jugador 2
+          const oponenteRef = ref(database, 'salas/' + res.idLargo + '/currentGame/Jugador1');
+          const jugadorRef = ref(database, 'salas/' + res.idLargo + '/currentGame/Jugador2');
+
+          return get(jugadorRef).then(snap => {
+            if (snap.exists()) {
+              const jugador2 = snap.val();
+              if (jugador2.id && jugador2.id !== this.user?.id) {
+                throw new Error("La sala ya está ocupada");
+              }
+            }
+
+            this.history.roomId = idCorto;
+            return update(jugadorRef, {
+              name: this.user?.name,
+              id: this.user?.id,
+              online: true
+            }).then(() => {
+              return get(oponenteRef).then((snapShot) => {
+                if (snapShot.exists()) {
                   const dataOponent = snapShot.val();
                   this.history.oponent = dataOponent.name;
                   this.notify();
                 }
-              })
-              onValue(oponenteRef, (snap) => {
-                const dataOp = snap.val();
-                this.escucharOponente(dataOp);
+                onValue(oponenteRef, (snap) => {
+                  this.escucharOponente(snap.val());
+                });
               });
-            }
-          }
-        })
-          .catch(error => {
-            console.error('Error al conectar a la RTDB:', error);
+            });
           });
-      })
-  }
+        }
+      });
+    });
+}
   private escucharOponente(data: any) {
     if (!data.reset) {
       let flag = false;

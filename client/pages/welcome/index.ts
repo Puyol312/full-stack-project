@@ -9,12 +9,12 @@ export function initWelcome(router: any): HTMLElement{
   div.classList.add("welcome-container")
   div.innerHTML = `
     <h1>
-      Piedra<br>
-      Papel <span>ó</span><br>
-      Tijera
+      Piedra Papel <span>ó</span> Tijera
     </h1>
-    <mi-boton name="Nuevo Juego" id="NuevoJuego"></mi-boton>
-    <mi-boton name="Ingresar a una Sala" id="IngresarSala"></mi-boton>
+    <div class="contenedor-botones">
+      <mi-boton class="botones-welcome" name="Nuevo Juego" id="NuevoJuego"></mi-boton>
+      <mi-boton class="botones-welcome" name="Ingresar a una Sala" id="IngresarSala"></mi-boton>
+    </div>
     <multi-hand></multi-hand>
   `;
   div.querySelector("#NuevoJuego")?.addEventListener('click',() => {

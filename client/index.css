@@ -7,8 +7,8 @@
 }
 body{
   margin: 0;
-  background-image: url(./assets/img/fondo.png);
-  overflow: hidden; 
+  background-image: url(./assets/img/fondo.png); 
+  overflow-y: auto;
 }
 #root{
   height: 100vh;

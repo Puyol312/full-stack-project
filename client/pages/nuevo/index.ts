@@ -8,24 +8,25 @@ export function initNuevo(router:any):HTMLElement{
   div.classList.add("nuevo-container")
   div.innerHTML = `
     <h1>
-      Piedra<br>
-      Papel <span>ó</span><br>
-      Tijera
+      Piedra Papel <span>ó</span> Tijera
     </h1>
-    <form class="form_nuevo">
-      <div class="contenedor_label">
-        <label for="nombre" class="label_form">Tu nombre</label>
-      </div>
-      <input 
-        type="text" 
-        class="input_element"
-        id="nombre" 
-        name="nombre" 
-        placeholder="Escribe tu nombre" 
-        required
-      >
-      <button id="NuevoNombre" type="submit" class="button_element">Empezar</button>
-    </form>
+    <div class="contenedor-secundario-nuevo">
+      <form class="form_nuevo">
+        <div class="contenedor_label">
+          <label for="nombre" class="label_form">Tu nombre</label>
+        </div>
+
+          <input 
+            type="text" 
+            class="input_element"
+            id="nombre" 
+            name="nombre" 
+            placeholder="Escribe tu nombre" 
+            required
+          >
+          <button id="NuevoNombre" type="submit" class="button_element">Empezar</button>
+      </form>
+    </div>
     <multi-hand></multi-hand>
   `;
   const form = div.querySelector("form");

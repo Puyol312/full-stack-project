@@ -9,31 +9,31 @@ export function initSala(router: any): HTMLElement{
   div.classList.add("sala-container");
   div.innerHTML = `
   <h1>
-  Piedra<br>
-  Papel <span>ó</span><br>
-  Tijera
+    Piedra Papel <span>ó</span> Tijera
   </h1>
-  <form class="form_sala">
-  <div class="contenedor_label">
-  <label for="nombre" class="label_form">Datos</label>
+  <div class="contenedor-secundario-sala">
+    <form class="form_sala">
+      <div class="contenedor_label">
+        <label for="nombre" class="label_form">Datos</label>
+      </div>
+      <input 
+        type="text" 
+        class="input_element"
+        id="nombre" 
+        name="nombre" 
+        placeholder="Escribe tu nombre" 
+      >
+      <input 
+        type="text" 
+        class="input_element"
+        id="sala" 
+        name="sala" 
+        placeholder="Escribe la sala" 
+        required
+      >
+      <button id="salaNombre" type="submit" class="button_element">Empezar</button>
+    </form>
   </div>
-  <input 
-  type="text" 
-  class="input_element"
-  id="nombre" 
-  name="nombre" 
-  placeholder="Escribe tu nombre" 
-  >
-  <input 
-  type="text" 
-  class="input_element"
-  id="sala" 
-  name="sala" 
-  placeholder="Escribe la sala" 
-  required
-  >
-  <button id="salaNombre" type="submit" class="button_element">Empezar</button>
-  </form>
   <multi-hand></multi-hand>
   `;
   const nombreInput = div.querySelector<HTMLInputElement>("#nombre");
@@ -58,8 +58,13 @@ export function initSala(router: any): HTMLElement{
       state.setUser(nombre, false);
     }
     setTimeout(() => {
-      state.conectarRTDB(sala);
-      router.goTo("/rules");
+      state.conectarRTDB(sala)
+        .then(() => { 
+          router.goTo("/rules");
+        })
+        .catch(() => { 
+          router.goTo("/notFound")
+        })
     }, 1000);
   });
   return div;

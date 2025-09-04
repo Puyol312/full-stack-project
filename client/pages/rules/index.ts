@@ -10,10 +10,12 @@ export function initRules(router:any):HTMLElement{
   div.classList.add("contenedor-rules")
   div.innerHTML = `
       <x-encabezado></x-encabezado>
-      <div class="contenedor-rules-texto">
-        <p>Presiona jugar y elegi: piedra, papel o tijera antes de que pasen los 3 segundos.</p>
+      <div class="contenedor-rules-secundario">
+        <div class="contenedor-rules-texto">
+          <p>Presiona jugar y elegi: piedra, papel o tijera antes de que pasen los 3 segundos.</p>
+        </div>
+        <mi-boton id="jugar" name="¡Jugar!"></mi-boton>
       </div>
-      <mi-boton id="jugar" name="¡Jugar!"></mi-boton>
       <multi-hand></multi-hand>
   `;
   // State.getInstance().solveRules();

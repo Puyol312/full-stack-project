@@ -5,10 +5,10 @@
     "test": "echo \"Error: no test specified\" && exit 1",
     "dev:back": "nodemon --watch ./server --ext ts,js,json --exec \"npx tsx ./server/index.ts\"",
     "dev:front": "parcel serve ./client/index.html",
-    "build:server": "npx tsc",
+    "build:back": "npx tsc",
     "build:front": "parcel build ./client/index.html",
     "build": "npm run build:server && npm run build:front",
-    "start": "node ./dist/index.js"
+    "start": "node ./server/index.js"
   },
   "keywords": [],
   "author": "",
@@ -36,6 +36,7 @@
     "firebase": "^12.2.1",
     "firebase-admin": "^13.5.0",
     "nanoid": "^5.1.5",
-    "path": "^0.12.7"
+    "path": "^0.12.7",
+    "typescript": "^5.9.2"
   }
 }

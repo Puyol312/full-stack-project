@@ -7,10 +7,10 @@ import { State } from "../../state";
 export function initPlayground(router: any): HTMLElement{
   const state = State.getInstance();
   const div = document.createElement("div");
-  div.classList.add("contenedor-rules")
+  div.classList.add("contenedor-playGround")
   div.innerHTML = `
       <x-encabezado></x-encabezado>
-      <div class="contenedor-rules-texto">
+      <div class="contenedor-playGround-texto">
         <p>Esperando a que ${state.getHistory().oponent} presione ¡Jugar!...</p>
       </div>
       <multi-hand></multi-hand>
