@@ -7,7 +7,7 @@
     "dev:front": "parcel serve ./client/index.html",
     "build:back": "npx tsc",
     "build:front": "parcel build ./client/index.html",
-    "build": "npm run build:server && npm run build:front",
+    "build": "npm run build:back && npm run build:front",
     "start": "node ./server/index.js"
   },
   "keywords": [],
